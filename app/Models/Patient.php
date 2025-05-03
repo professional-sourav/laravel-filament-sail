@@ -15,6 +15,12 @@ class Patient extends Model
         'owner_id',
     ];
 
+    protected $casts = [
+        'date_of_birth' => 'date',
+    ];
+
+    protected static ?string $recordNameAttribute = 'name';
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(Owner::class);

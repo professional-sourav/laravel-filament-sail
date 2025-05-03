@@ -53,6 +53,8 @@ class AdminportalPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->globalSearch(true)
+            ->globalSearchFieldKeyBindingSuffix();
     }
 }

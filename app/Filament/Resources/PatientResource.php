@@ -10,12 +10,45 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class PatientResource extends Resource
 {
     protected static ?string $model = Patient::class;
 
+    protected static int $globalSearchResultsLimit = 1;
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'type'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Owner' => $record->owner->name,
+            'Date of Birth' => $record->date_of_birth->format('d/m/Y'),
+            'Type' => $record->type,
+            'Treatments' => $record->treatments->count(),
+        ];
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()
+            ->with(['owner', 'treatments']);
+    }
+
+    /*public static function getGlobalSearchResultActions(Model $record): array
+    {
+        return [
+            Tables\Actions\EditAction::make()
+                ->url(static::getUrl('edit', ['record' => $record])),
+        ];
+    }*/
 
     public static function form(Form $form): Form
     {
