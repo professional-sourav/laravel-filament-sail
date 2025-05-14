@@ -1,27 +1,21 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\TaskResource\RelationManagers;
 
 use App\Enums\Status;
-use App\Filament\Resources\TaskResource\Pages;
-use App\Filament\Resources\TaskResource\RelationManagers\TasksRelationManager;
-use App\Models\Task;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
-class TaskResource extends Resource
+class TasksRelationManager extends RelationManager
 {
-    protected static ?string $model = Task::class;
+    protected static string $relationship = 'tasks';
 
-    protected static ?string $navigationGroup = 'Core';
+    protected static ?string $title = 'Sub Tasks';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -29,12 +23,15 @@ class TaskResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Textarea::make('description')
-                ->rows(3),
+                    ->rows(3),
                 Forms\Components\Select::make('parent_id')
                     ->relationship('parent', 'name')
                     ->searchable()
                     ->preload()
                     ->placeholder('Select a parent task')
+                    ->default(
+                        fn (): ?int => $this->ownerRecord->id
+                    )
                     ->label('Parent Task'),
                 Forms\Components\Select::make('status')
                     ->options(
@@ -46,62 +43,38 @@ class TaskResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('task_id')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('task_id')
-                    ->label('Parent Task Id')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tasks_count')
-                    ->counts('tasks')
-                    ->label('Sub Tasks'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn (Status $state): string => $state->label())
                     ->color(fn (Status $state): string => $state->getColor()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
-                Tables\Filters\Filter::make('task_id')
-                ->query(fn (Builder $query) => $query->whereNull('task_id'))
-                ->label('No Sub Tasks')
-                ->default(),
+                //
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            TasksRelationManager::class
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListTasks::route('/'),
-            'create' => Pages\CreateTask::route('/create'),
-            'view' => Pages\ViewTask::route('/{record}'),
-            'edit' => Pages\EditTask::route('/{record}/edit'),
-        ];
     }
 }
