@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\Status;
 
 return new class extends Migration
 {
@@ -15,7 +16,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->enum('status', ['pending', 'in-progress', 'completed', 'cancelled'])->default('pending');
+            $table->enum(
+                'status',
+                Status::getValues()
+            )->default(Status::PENDING);
             $table->timestamps();
         });
     }
